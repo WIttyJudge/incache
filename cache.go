@@ -1,35 +1,29 @@
-package main
+package cache
 
 import (
-	"fmt"
 	"sync"
 )
 
-type Item struct {
-	Value interface{}
-}
-
 type Cache struct {
-	items map[string]Item
 	mu    sync.RWMutex
+	items map[string]Item
+
+	metrics *Metrics
 }
 
 func New() *Cache {
 	return &Cache{
 		mu:    sync.RWMutex{},
 		items: make(map[string]Item),
+
+		metrics: NewMetrics(),
 	}
 }
 
-// Set key to hold the string value.
-// If key already holds a value, I will be overwritten.
+// Set the key to hold a value.
+// If key already holds a value, It will be overwritten.
 func (c *Cache) Set(key string, value interface{}) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	c.items[key] = Item{
-		Value: value,
-	}
+	c.set(key, value)
 }
 
 // Get the value of key.
@@ -38,9 +32,9 @@ func (c *Cache) Get(key string) interface{} {
 	return c.get(key)
 }
 
-// Returns the values of all specified keys.
+// Get the values of all specified keys.
 // For every specified key that doesn't exist, nil value will be returned.
-func (c *Cache) MGet(keys ...string) []interface{} {
+func (c *Cache) GetMultiple(keys []string) []interface{} {
 	values := make([]interface{}, len(keys))
 
 	for i, key := range keys {
@@ -50,27 +44,45 @@ func (c *Cache) MGet(keys ...string) []interface{} {
 	return values
 }
 
-// Get the value of key and delete the key.
+// Get the old value stored by key and set the new one for that key.
 // If the key doesn't exist, nil value will be returned.
-func (c *Cache) GetDel(key string) interface{} {
+func (c *Cache) GetSet(key string, value interface{}) interface{} {
+	v := c.get(key)
+	c.set(key, value)
+
+	return v
+}
+
+// Get the value of key and delete it.
+// If the key doesn't exist, nil value will be returned.
+func (c *Cache) GetDelete(key string) interface{} {
 	value := c.get(key)
 	if value != nil {
-		c.Del(key)
+		c.delete(key)
 	}
 
 	return value
 }
 
-// Removes the specified keys.
-// A key is ignored if it doesn't exist.
-func (c *Cache) Del(key ...string) {
-	for _, k := range key {
-		delete(c.items, k)
-	}
+// Delete the value of key.
+// If the key doesn't exist, nothing will happen.
+func (c *Cache) Delete(key string) {
+	c.delete(key)
 }
 
-// Returns all stored keys.
+// Delete all values stored in the cache.
+func (c *Cache) DeleteAll() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.items = make(map[string]Item)
+}
+
+// Get slice of all existing keys in the cache.
 func (c *Cache) Keys() []string {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	keys := make([]string, len(c.items))
 
 	i := 0
@@ -82,24 +94,62 @@ func (c *Cache) Keys() []string {
 	return keys
 }
 
-func (c *Cache) Flush() {
-	c.items = make(map[string]Item)
+// Get count of keys in the cache.
+func (c *Cache) KeysCount() int {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	count := len(c.items)
+	return count
+}
+
+// Check if the key exists in the cache.
+func (c *Cache) Has(key string) bool {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	_, ok := c.items[key]
+	return ok
+}
+
+// Get pointer to Metrics structure that collects an important metrics during
+// the work with cache.
+func (c *Cache) Metrics() *Metrics {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	return c.metrics
+}
+
+func (c *Cache) set(key string, value interface{}) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	item := Item{
+		Value: value,
+	}
+	c.items[key] = item
+
+	c.metrics.incrInsertions()
 }
 
 func (c *Cache) get(key string) interface{} {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
-	return c.items[key].Value
+	value := c.items[key].Value
+	if value == nil {
+		c.metrics.incrMisses()
+		return nil
+	}
+
+	c.metrics.incrHits()
+	return value
 }
 
-func main() {
-	cache := New()
+func (c *Cache) delete(key string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 
-	cache.Set("Test", 1)
-	cache.Set("1", "STRING")
-	// cache.Clear()
-
-	result := cache.MGet("Test", "1")
-	fmt.Println(result)
+	delete(c.items, key)
 }
