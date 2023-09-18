@@ -12,6 +12,7 @@ type Cache struct {
 	metrics *Metrics
 }
 
+// Creates new instance of cache.
 func New(opts ...optionsFunc) *Cache {
 	options := DefaultOptions()
 	for _, fn := range opts {

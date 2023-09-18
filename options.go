@@ -16,12 +16,14 @@ func DefaultOptions() Options {
 	}
 }
 
+// Sets the TTL duration for cached items.
 func WithTTL(ttl time.Duration) optionsFunc {
 	return func(opts *Options) {
 		opts.ttl = ttl
 	}
 }
 
+// Enables the collection of metrics for the cache.
 func WithMetrics() optionsFunc {
 	return func(opts *Options) {
 		opts.enableMetrics = true
