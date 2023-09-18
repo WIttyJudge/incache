@@ -8,16 +8,24 @@ type Cache struct {
 	mu    sync.RWMutex
 	items map[string]Item
 
+	options Options
 	metrics *Metrics
 }
 
-func New() *Cache {
+func New(opts ...optionsFunc) *Cache {
+	options := DefaultOptions()
+	for _, fn := range opts {
+		fn(&options)
+	}
+
 	return &Cache{
 		mu:    sync.RWMutex{},
 		items: make(map[string]Item),
 
+		options: options,
 		metrics: NewMetrics(),
 	}
+
 }
 
 // Set the key to hold a value.
@@ -130,7 +138,9 @@ func (c *Cache) set(key string, value interface{}) {
 	}
 	c.items[key] = item
 
-	c.metrics.incrInsertions()
+	if c.options.enableMetrics {
+		c.metrics.incrInsertions()
+	}
 }
 
 func (c *Cache) get(key string) interface{} {
@@ -139,11 +149,16 @@ func (c *Cache) get(key string) interface{} {
 
 	value := c.items[key].Value
 	if value == nil {
-		c.metrics.incrMisses()
+		if c.options.enableMetrics {
+			c.metrics.incrMisses()
+		}
 		return nil
 	}
 
-	c.metrics.incrHits()
+	if c.options.enableMetrics {
+		c.metrics.incrHits()
+	}
+
 	return value
 }
 

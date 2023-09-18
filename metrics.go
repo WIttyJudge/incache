@@ -17,17 +17,17 @@ func NewMetrics() *Metrics {
 	return &Metrics{}
 }
 
-// Get insertions
+// Get collected insertions
 func (m *Metrics) Insertions() uint64 {
 	return atomic.LoadUint64(&m.insertions)
 }
 
-// Get hits
+// Get collected hits
 func (m *Metrics) Hits() uint64 {
 	return atomic.LoadUint64(&m.hits)
 }
 
-// get misses
+// Get collected misses
 func (m *Metrics) Misses() uint64 {
 	return atomic.LoadUint64(&m.misses)
 }
