@@ -9,22 +9,22 @@ type Cache struct {
 	mu    sync.RWMutex
 	items map[string]Item
 
-	options Options
+	config  Config
 	metrics *metrics
 }
 
 // Creates new instance of cache.
-func New(opts ...optionsFunc) *Cache {
-	options := defaultOptions()
-	for _, fn := range opts {
-		fn(&options)
+func New(conf ...configFunc) *Cache {
+	config := defaultConfig()
+	for _, fn := range conf {
+		fn(&config)
 	}
 
 	return &Cache{
 		mu:    sync.RWMutex{},
 		items: make(map[string]Item),
 
-		options: options,
+		config:  config,
 		metrics: newMetrics(),
 	}
 }
@@ -32,7 +32,7 @@ func New(opts ...optionsFunc) *Cache {
 // Set the key to hold a value.
 // If key already holds a value, It will be overwritten.
 func (c *Cache) Set(key string, value interface{}) {
-	ttl := c.options.ttl
+	ttl := c.config.ttl
 
 	c.set(key, value, ttl)
 }
@@ -45,7 +45,7 @@ func (c *Cache) SetWithTTL(key string, value interface{}, ttl time.Duration) {
 
 // Set the key to hold a value, and then returns it.
 func (c *Cache) SetGet(key string, value interface{}) interface{} {
-	ttl := c.options.ttl
+	ttl := c.config.ttl
 
 	c.set(key, value, ttl)
 	v := c.get(key)
@@ -83,7 +83,7 @@ func (c *Cache) GetMultiple(keys []string) []interface{} {
 // Get the old value stored by key and set the new one for that key.
 // If the key doesn't exist, nil value will be returned.
 func (c *Cache) GetSet(key string, value interface{}) interface{} {
-	ttl := c.options.ttl
+	ttl := c.config.ttl
 
 	v := c.get(key)
 	c.set(key, value, ttl)
@@ -208,25 +208,25 @@ func (c *Cache) delete(key string) {
 }
 
 func (c *Cache) metricsIncrInsertions() {
-	if c.options.enableMetrics {
+	if c.config.enableMetrics {
 		c.metrics.incrInsertions()
 	}
 }
 
 func (c *Cache) metricsIncrHits() {
-	if c.options.enableMetrics {
+	if c.config.enableMetrics {
 		c.metrics.incrHits()
 	}
 }
 
 func (c *Cache) metricsIncrMisses() {
-	if c.options.enableMetrics {
+	if c.config.enableMetrics {
 		c.metrics.incrMisses()
 	}
 }
 
 func (c *Cache) metricsIncrEvictions() {
-	if c.options.enableMetrics {
+	if c.config.enableMetrics {
 		c.metrics.incrEvictions()
 	}
 }

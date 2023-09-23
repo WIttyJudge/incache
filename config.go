@@ -2,30 +2,30 @@ package cache
 
 import "time"
 
-type Options struct {
+type Config struct {
 	ttl           time.Duration
 	enableMetrics bool
 }
 
-type optionsFunc func(*Options)
+type configFunc func(*Config)
 
-func defaultOptions() Options {
-	return Options{
+func defaultConfig() Config {
+	return Config{
 		ttl:           5 * time.Minute,
 		enableMetrics: false,
 	}
 }
 
 // Sets default TTL for all items that whould be stored in the cache.
-func WithTTL(ttl time.Duration) optionsFunc {
-	return func(opts *Options) {
-		opts.ttl = ttl
+func WithTTL(ttl time.Duration) configFunc {
+	return func(conf *Config) {
+		conf.ttl = ttl
 	}
 }
 
 // Enables the collection of metrics that run throughout the cache work.
-func WithMetrics() optionsFunc {
-	return func(opts *Options) {
-		opts.enableMetrics = true
+func WithMetrics() configFunc {
+	return func(conf *Config) {
+		conf.enableMetrics = true
 	}
 }
