@@ -91,6 +91,15 @@ func (c *Cache) GetSet(key string, value interface{}) interface{} {
 	return v
 }
 
+// Similar to GetSet method, but with an opportunity to adjust a ttl for that
+// particular key manually.
+func (c *Cache) GetSetWithTTL(key string, value interface{}, ttl time.Duration) interface{} {
+	v := c.get(key)
+	c.set(key, value, ttl)
+
+	return v
+}
+
 // Get the value of key and delete it.
 // If the key doesn't exist, nil value will be returned.
 func (c *Cache) GetDelete(key string) interface{} {
