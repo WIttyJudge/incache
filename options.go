@@ -9,21 +9,21 @@ type Options struct {
 
 type optionsFunc func(*Options)
 
-func DefaultOptions() Options {
+func defaultOptions() Options {
 	return Options{
 		ttl:           5 * time.Minute,
 		enableMetrics: false,
 	}
 }
 
-// Sets the TTL duration for cached items.
+// Sets default TTL for all items that whould be stored in the cache.
 func WithTTL(ttl time.Duration) optionsFunc {
 	return func(opts *Options) {
 		opts.ttl = ttl
 	}
 }
 
-// Enables the collection of metrics for the cache.
+// Enables the collection of metrics that run throughout the cache work.
 func WithMetrics() optionsFunc {
 	return func(opts *Options) {
 		opts.enableMetrics = true

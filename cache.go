@@ -10,12 +10,12 @@ type Cache struct {
 	items map[string]Item
 
 	options Options
-	metrics *Metrics
+	metrics *metrics
 }
 
 // Creates new instance of cache.
 func New(opts ...optionsFunc) *Cache {
-	options := DefaultOptions()
+	options := defaultOptions()
 	for _, fn := range opts {
 		fn(&options)
 	}
@@ -25,7 +25,7 @@ func New(opts ...optionsFunc) *Cache {
 		items: make(map[string]Item),
 
 		options: options,
-		metrics: NewMetrics(),
+		metrics: newMetrics(),
 	}
 }
 
@@ -152,7 +152,7 @@ func (c *Cache) Has(key string) bool {
 
 // Get pointer to Metrics structure that collects an important metrics during
 // the work with cache.
-func (c *Cache) Metrics() *Metrics {
+func (c *Cache) Metrics() *metrics {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
@@ -213,5 +213,11 @@ func (c *Cache) metricsIncrHits() {
 func (c *Cache) metricsIncrMisses() {
 	if c.options.enableMetrics {
 		c.metrics.incrMisses()
+	}
+}
+
+func (c *Cache) metricsIncrEvictions() {
+	if c.options.enableMetrics {
+		c.metrics.incrEvictions()
 	}
 }

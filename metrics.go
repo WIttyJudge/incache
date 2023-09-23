@@ -2,7 +2,7 @@ package cache
 
 import "sync/atomic"
 
-type Metrics struct {
+type metrics struct {
 	// Shows how many times items were inserted into cache.
 	insertions uint64
 
@@ -16,42 +16,42 @@ type Metrics struct {
 	evictions uint64
 }
 
-func NewMetrics() *Metrics {
-	return &Metrics{}
+func newMetrics() *metrics {
+	return &metrics{}
 }
 
 // Get collected insertions.
-func (m *Metrics) Insertions() uint64 {
+func (m *metrics) Insertions() uint64 {
 	return atomic.LoadUint64(&m.insertions)
 }
 
 // Get collected hits.
-func (m *Metrics) Hits() uint64 {
+func (m *metrics) Hits() uint64 {
 	return atomic.LoadUint64(&m.hits)
 }
 
 // Get collected misses.
-func (m *Metrics) Misses() uint64 {
+func (m *metrics) Misses() uint64 {
 	return atomic.LoadUint64(&m.misses)
 }
 
 // Get collected evictions.
-func (m *Metrics) Evictions() uint64 {
+func (m *metrics) Evictions() uint64 {
 	return atomic.LoadUint64(&m.evictions)
 }
 
-func (m *Metrics) incrInsertions() {
+func (m *metrics) incrInsertions() {
 	atomic.AddUint64(&m.insertions, 1)
 }
 
-func (m *Metrics) incrHits() {
+func (m *metrics) incrHits() {
 	atomic.AddUint64(&m.hits, 1)
 }
 
-func (m *Metrics) incrMisses() {
+func (m *metrics) incrMisses() {
 	atomic.AddUint64(&m.misses, 1)
 }
 
-func (m *Metrics) incrEvictions() {
+func (m *metrics) incrEvictions() {
 	atomic.AddUint64(&m.evictions, 1)
 }
