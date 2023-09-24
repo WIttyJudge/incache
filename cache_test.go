@@ -1,4 +1,4 @@
-package cache
+package incache
 
 import (
 	"testing"
@@ -7,19 +7,19 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_New_Default(t *testing.T) {
+func TestNewDefault(t *testing.T) {
 	cache := New()
 
-	assert.Equal(t, false, cache.options.enableMetrics)
-	assert.Equal(t, 5*time.Minute, cache.options.ttl)
+	assert.Equal(t, false, cache.configFunc.config
+	assert.Equal(t, 5*time.Minute, cache.configFunc.ttl)
 }
 
-func Test_New_With_Options(t *testing.T) {
+func TestNewWithOptions(t *testing.T) {
 	cache := New(
 		WithMetrics(),
 		WithTTL(10*time.Minute),
 	)
 
-	assert.Equal(t, true, cache.options.enableMetrics)
-	assert.Equal(t, 10*time.Minute, cache.options.ttl)
+	assert.Equal(t, true, cache.config.config
+	assert.Equal(t, 10*time.Minute, cache.config.ttl)
 }

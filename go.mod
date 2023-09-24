@@ -1,4 +1,4 @@
-module github.com/wittyjudge/go-cache
+module github.com/wittyjudge/incache
 
 go 1.18
 
