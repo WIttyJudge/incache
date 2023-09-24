@@ -2,11 +2,7 @@ package cache
 
 import "time"
 
-const (
-	ItemNoTTL      time.Duration = -1
-	ItemDefaultTTL time.Duration = 0
-)
-
+// The Item struct represents a cached item.
 type Item struct {
 	Value     interface{}
 	TTL       time.Duration
@@ -14,19 +10,22 @@ type Item struct {
 }
 
 func newItem(value interface{}, ttl time.Duration) Item {
-	expiresAt := time.Now().Add(ttl)
-
 	item := Item{
-		Value:     value,
-		TTL:       ttl,
-		ExpiresAt: expiresAt,
+		Value: value,
+		TTL:   ttl,
+	}
+
+	if ttl > 0 {
+		expiresAt := time.Now().Add(ttl)
+		item.ExpiresAt = expiresAt
 	}
 
 	return item
 }
 
+// Checks whether the item has expired.
 func (i Item) Expired() bool {
-	if i.TTL <= 0 {
+	if i.ExpiresAt.IsZero() {
 		return false
 	}
 

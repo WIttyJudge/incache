@@ -5,28 +5,48 @@ import (
 	"time"
 )
 
+// Cache is a synchronised map of items that are automatically removed
+// when they expire.
 type Cache struct {
-	mu    sync.RWMutex
-	items map[string]Item
+	mu               sync.RWMutex
+	items            map[string]Item
+	expirationsQueue map[string]time.Time
 
 	config  Config
-	metrics *metrics
+	metrics metrics
+
+	closeCh chan struct{}
 }
 
-// Creates new instance of cache.
+// Creates new instance of the cache.
 func New(conf ...configFunc) *Cache {
 	config := defaultConfig()
 	for _, fn := range conf {
 		fn(&config)
 	}
 
-	return &Cache{
-		mu:    sync.RWMutex{},
-		items: make(map[string]Item),
+	cache := &Cache{
+		mu:               sync.RWMutex{},
+		items:            make(map[string]Item),
+		expirationsQueue: make(map[string]time.Time),
 
 		config:  config,
 		metrics: newMetrics(),
+
+		closeCh: make(chan struct{}),
 	}
+
+	if config.cleanupInterval > 0 {
+		go cache.runAutomaticCleanup()
+	}
+
+	return cache
+}
+
+// Stops the automatic cleanup process.
+// You don't need to run this function if you have cleanupInterval <= 0.
+func (c *Cache) Close() {
+	close(c.closeCh)
 }
 
 // Set the key to hold a value.
@@ -105,7 +125,7 @@ func (c *Cache) GetSetWithTTL(key string, value interface{}, ttl time.Duration) 
 func (c *Cache) GetDelete(key string) interface{} {
 	value := c.get(key)
 	if value != nil {
-		c.delete(key)
+		c.evict(key)
 	}
 
 	return value
@@ -114,7 +134,13 @@ func (c *Cache) GetDelete(key string) interface{} {
 // Delete the value of key.
 // If the key doesn't exist, nothing will happen.
 func (c *Cache) Delete(key string) {
-	c.delete(key)
+	c.mu.Lock()
+	value := c.items[key].Value
+	c.mu.Unlock()
+
+	if value != nil {
+		c.evict(key)
+	}
 }
 
 // Delete all values stored in the cache.
@@ -123,6 +149,28 @@ func (c *Cache) DeleteAll() {
 	defer c.mu.Unlock()
 
 	c.items = make(map[string]Item)
+}
+
+// DeleteExpired deletes all expired items from the cache.
+func (c *Cache) DeleteExpired() {
+	c.mu.Lock()
+
+	timeNow := time.Now()
+	expiredKeys := make([]string, 0, len(c.expirationsQueue))
+
+	for key, time := range c.expirationsQueue {
+		if timeNow.Before(time) {
+			continue
+		}
+
+		expiredKeys = append(expiredKeys, key)
+	}
+
+	c.mu.Unlock()
+
+	for _, key := range expiredKeys {
+		c.evict(key)
+	}
 }
 
 // Get slice of all existing keys in the cache.
@@ -141,8 +189,8 @@ func (c *Cache) Keys() []string {
 	return keys
 }
 
-// Count returns the number of stored elements in the cache.
-func (c *Cache) Count() int {
+// Returns the number of stored elements in the cache.
+func (c *Cache) Len() int {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
@@ -159,13 +207,36 @@ func (c *Cache) Has(key string) bool {
 	return ok
 }
 
-// Get pointer to Metrics structure that collects an important metrics during
-// the work with cache.
-func (c *Cache) Metrics() *metrics {
+// Get collected cache metrics.
+func (c *Cache) Metrics() metrics {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
 	return c.metrics
+}
+
+// Resets cache metrics.
+func (c *Cache) ResetMetrics() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.metrics = metrics{}
+}
+
+// If cleanupInterval more than 0, it will run inside goroutine.
+// Checks if there are expired items and deletes them.
+func (c *Cache) runAutomaticCleanup() {
+	ticker := time.NewTicker(c.config.cleanupInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			c.DeleteExpired()
+		case <-c.closeCh:
+			return
+		}
+	}
 }
 
 func (c *Cache) set(key string, value interface{}, ttl time.Duration) {
@@ -174,6 +245,10 @@ func (c *Cache) set(key string, value interface{}, ttl time.Duration) {
 
 	item := newItem(value, ttl)
 	c.items[key] = item
+
+	if !item.ExpiresAt.IsZero() {
+		c.expirationsQueue[key] = item.ExpiresAt
+	}
 
 	c.metricsIncrInsertions()
 }
@@ -200,11 +275,13 @@ func (c *Cache) get(key string) interface{} {
 	return value
 }
 
-func (c *Cache) delete(key string) {
+func (c *Cache) evict(key string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	delete(c.items, key)
+	delete(c.expirationsQueue, key)
+	c.metricsIncrEvictions()
 }
 
 func (c *Cache) metricsIncrInsertions() {

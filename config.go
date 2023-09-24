@@ -2,24 +2,38 @@ package cache
 
 import "time"
 
+// Config for cache.
 type Config struct {
-	ttl           time.Duration
-	enableMetrics bool
+	ttl             time.Duration
+	cleanupInterval time.Duration
+	enableMetrics   bool
 }
 
 type configFunc func(*Config)
 
+// DefaultConfig initializes config with default values.
 func defaultConfig() Config {
 	return Config{
-		ttl:           5 * time.Minute,
-		enableMetrics: false,
+		ttl:             5 * time.Minute,
+		cleanupInterval: 5 * time.Minute,
+		enableMetrics:   false,
 	}
 }
 
 // Sets default TTL for all items that whould be stored in the cache.
+// TTL <= 0 means that the item won't have expiration time at all.
 func WithTTL(ttl time.Duration) configFunc {
 	return func(conf *Config) {
 		conf.ttl = ttl
+	}
+}
+
+// Interval between removing expired items.
+// If the interval is less than or equal to 0, no automatic clearing
+// is performed.
+func WithCleanupInterval(interval time.Duration) configFunc {
+	return func(conf *Config) {
+		conf.cleanupInterval = interval
 	}
 }
 

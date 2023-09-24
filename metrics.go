@@ -2,6 +2,7 @@ package cache
 
 import "sync/atomic"
 
+// Metrics stores cache statistics
 type metrics struct {
 	// Shows how many times items were inserted into cache.
 	insertions uint64
@@ -16,8 +17,8 @@ type metrics struct {
 	evictions uint64
 }
 
-func newMetrics() *metrics {
-	return &metrics{}
+func newMetrics() metrics {
+	return metrics{}
 }
 
 // Get collected insertions.
