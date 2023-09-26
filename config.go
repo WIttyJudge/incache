@@ -20,7 +20,7 @@ func defaultConfig() Config {
 	}
 }
 
-// Sets default TTL for all items that whould be stored in the cache.
+// Sets default TTL for all items that would be stored in the cache.
 // TTL <= 0 means that the item won't have expiration time at all.
 func WithTTL(ttl time.Duration) configFunc {
 	return func(conf *Config) {
