@@ -1,7 +1,12 @@
-# go-cache
-
+# incache
 
 TOOD:
 
-1. Add metrics
-2. Add expiration time for items
+## Development Roadmap
+
+- [x] Add metrics collection.
+- [] Tests and benchmarks.
+- [] Examples of usage in documenation
+
+## License
+`incache` source code is available under the MIT License.
