@@ -152,6 +152,7 @@ func (c *Cache) DeleteAll() {
 }
 
 // DeleteExpired deletes all expired items from the cache.
+// You don't need to perform it manually unless cleanupInterval is <= 0.
 func (c *Cache) DeleteExpired() {
 	c.mu.Lock()
 
