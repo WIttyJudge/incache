@@ -1,5 +1,7 @@
 # incache
 
+[![MIT License](https://img.shields.io/github/license/mashape/apistatus.svg?maxAge=2592000)](https://github.com/WIttyJudge/incache/blob/main/LICENSE)
+
 Simple thread-safe time-based caching library for Go.
 
 The library includes:
