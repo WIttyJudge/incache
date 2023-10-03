@@ -7,10 +7,10 @@ type metrics struct {
 	// Shows how many times items were inserted into cache.
 	insertions uint64
 
-	// Shows how many times items were successfully retrived by key.
+	// Shows how many times items were successfully retrieved by key.
 	hits uint64
 
-	// Shows how many times items weren't retrived by key.
+	// Shows how many times items weren't retrieved by key.
 	misses uint64
 
 	// Shows how many items were released from the cache.
