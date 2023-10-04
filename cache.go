@@ -247,7 +247,7 @@ func (c *Cache) set(key string, value interface{}, ttl time.Duration) {
 	item := newItem(value, ttl)
 	c.items[key] = item
 
-	if !item.ExpiresAt.IsZero() {
+	if item.CanExpire() {
 		c.expirationsQueue[key] = item.ExpiresAt
 	}
 

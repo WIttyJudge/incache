@@ -30,6 +30,7 @@ func TestItemIsExpired(t *testing.T) {
 	time.Sleep(1 * time.Millisecond)
 
 	assert.True(t, item.Expired())
+	assert.True(t, item.CanExpire())
 	assert.True(t, time.Now().After(item.ExpiresAt))
 	assert.False(t, item.ExpiresAt.IsZero())
 }
@@ -38,6 +39,7 @@ func TestItemIsNotExpired(t *testing.T) {
 	item := newItem("value", 5*time.Second)
 
 	assert.False(t, item.Expired())
+	assert.True(t, item.CanExpire())
 	assert.False(t, time.Now().After(item.ExpiresAt))
 	assert.False(t, item.ExpiresAt.IsZero())
 }
@@ -46,6 +48,7 @@ func TestItemNeverExpires(t *testing.T) {
 	item := newItem("value", 0)
 
 	assert.False(t, item.Expired())
+	assert.False(t, item.CanExpire())
 	assert.True(t, time.Now().After(item.ExpiresAt))
 	assert.True(t, item.ExpiresAt.IsZero())
 }

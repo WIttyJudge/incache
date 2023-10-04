@@ -25,9 +25,14 @@ func newItem(value interface{}, ttl time.Duration) Item {
 
 // Checks whether the item has expired.
 func (i Item) Expired() bool {
-	if i.ExpiresAt.IsZero() {
+	if !i.CanExpire() {
 		return false
 	}
 
 	return time.Now().After(i.ExpiresAt)
+}
+
+// Check whether the item can expire.
+func (i Item) CanExpire() bool {
+	return !i.ExpiresAt.IsZero()
 }
