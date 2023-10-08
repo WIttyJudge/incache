@@ -11,11 +11,10 @@ type Cache struct {
 	mu               sync.RWMutex
 	items            map[string]Item
 	expirationsQueue expirationsQueue
+	cleaner          *cleaner
 
 	config  Config
 	metrics metrics
-
-	closeCh chan struct{}
 }
 
 // Creates new instance of the cache.
@@ -32,21 +31,24 @@ func New(conf ...configFunc) *Cache {
 
 		config:  config,
 		metrics: newMetrics(),
-
-		closeCh: make(chan struct{}),
 	}
 
 	if config.cleanupInterval > 0 {
-		go cache.runAutomaticCleanup()
+		cache.cleaner = newCleaner(config.cleanupInterval)
+		cache.cleaner.start(cache)
 	}
 
 	return cache
 }
 
 // Stops the automatic cleanup process.
-// You don't need to run this function if you have cleanupInterval <= 0.
+//
+// It's not necessary to run this function if you have cleanupInterval <= 0,
+// since cleaner wasn't run.
 func (c *Cache) Close() {
-	close(c.closeCh)
+	if c.cleaner != nil {
+		c.cleaner.stop()
+	}
 }
 
 // Set the key to hold a value.
@@ -222,22 +224,6 @@ func (c *Cache) ResetMetrics() {
 	defer c.mu.Unlock()
 
 	c.metrics = metrics{}
-}
-
-// If cleanupInterval more than 0, it will run inside goroutine.
-// Checks if there are expired items and deletes them.
-func (c *Cache) runAutomaticCleanup() {
-	ticker := time.NewTicker(c.config.cleanupInterval)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ticker.C:
-			c.DeleteExpired()
-		case <-c.closeCh:
-			return
-		}
-	}
 }
 
 func (c *Cache) set(key string, value interface{}, ttl time.Duration) {

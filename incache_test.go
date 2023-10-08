@@ -10,14 +10,13 @@ import (
 
 func TestNewDefault(t *testing.T) {
 	cache := New()
-	defer cache.Close()
 
 	require.NotNil(t, cache)
 	assert.Equal(t, defaultConfig(), cache.config)
 	assert.NotNil(t, cache.items)
 	assert.NotNil(t, cache.expirationsQueue)
 	assert.NotNil(t, cache.metrics)
-	assert.NotNil(t, cache.closeCh)
+	assert.NotNil(t, cache.cleaner)
 }
 
 func TestNewCustomConfig(t *testing.T) {
@@ -32,15 +31,22 @@ func TestNewCustomConfig(t *testing.T) {
 		WithCleanupInterval(customConfig.cleanupInterval),
 		WithMetrics(),
 	)
-	defer cache.Close()
 
 	require.NotNil(t, cache)
 	assert.Equal(t, customConfig, cache.config)
 }
 
+func TestNewCustomConfigWithoutCleanup(t *testing.T) {
+	cache := New(WithCleanupInterval(0))
+
+	require.NotNil(t, cache)
+
+	assert.Nil(t, cache.cleaner)
+	assert.EqualValues(t, 0, cache.config.cleanupInterval)
+}
+
 func TestSet(t *testing.T) {
 	cache := New()
-	defer cache.Close()
 
 	cache.Set("key1", "value1")
 	assert.Equal(t, "value1", cache.Get("key1"))
@@ -49,7 +55,6 @@ func TestSet(t *testing.T) {
 
 func TestSetWithTTL(t *testing.T) {
 	cache := New()
-	defer cache.Close()
 
 	cache.SetWithTTL("key1", "value1", 5*time.Millisecond)
 	assert.Equal(t, "value1", cache.Get("key1"))
@@ -59,7 +64,6 @@ func TestSetWithTTL(t *testing.T) {
 
 func TestSetGet(t *testing.T) {
 	cache := New()
-	defer cache.Close()
 
 	recevedValue := cache.SetGet("key1", "value1")
 	assert.Equal(t, "value1", recevedValue)
@@ -67,7 +71,6 @@ func TestSetGet(t *testing.T) {
 
 func TestSetGetWithTTL(t *testing.T) {
 	cache := New()
-	defer cache.Close()
 
 	recevedValue := cache.SetGetWithTTL("key1", "value1", 5*time.Millisecond)
 	assert.Equal(t, "value1", recevedValue)
@@ -77,7 +80,6 @@ func TestSetGetWithTTL(t *testing.T) {
 
 func TestGet(t *testing.T) {
 	cache := New()
-	defer cache.Close()
 
 	cache.Set("key1", "value1")
 	cache.SetWithTTL("key2", "value2", 1*time.Millisecond)
@@ -89,7 +91,6 @@ func TestGet(t *testing.T) {
 
 func TestGetMultiple(t *testing.T) {
 	cache := New()
-	defer cache.Close()
 
 	cache.Set("key1", "value1")
 	cache.SetWithTTL("key2", "value2", 1*time.Millisecond)
@@ -101,7 +102,6 @@ func TestGetMultiple(t *testing.T) {
 
 func TestGetSet(t *testing.T) {
 	cache := New()
-	defer cache.Close()
 
 	receivedValue := cache.GetSet("key1", "value1")
 	assert.Equal(t, nil, receivedValue)
@@ -112,7 +112,6 @@ func TestGetSet(t *testing.T) {
 
 func TestGetSetWithTTL(t *testing.T) {
 	cache := New()
-	defer cache.Close()
 
 	receivedValue := cache.GetSetWithTTL("key1", "value1", 1*time.Minute)
 	assert.Equal(t, nil, receivedValue)
@@ -125,7 +124,6 @@ func TestGetSetWithTTL(t *testing.T) {
 
 func TestGetDelete(t *testing.T) {
 	cache := New()
-	defer cache.Close()
 
 	cache.Set("key1", "value1")
 
@@ -137,7 +135,6 @@ func TestGetDelete(t *testing.T) {
 
 func TestDelete(t *testing.T) {
 	cache := New()
-	defer cache.Close()
 
 	cache.Set("key1", "value1")
 	assert.Equal(t, "value1", cache.items["key1"].Value)
@@ -150,7 +147,6 @@ func TestDelete(t *testing.T) {
 
 func TestDeleteAll(t *testing.T) {
 	cache := New()
-	defer cache.Close()
 
 	cache.Set("key1", "value1")
 	cache.Set("key2", "value2")
@@ -162,7 +158,6 @@ func TestDeleteAll(t *testing.T) {
 
 func TestDeleteExpired(t *testing.T) {
 	cache := New(WithTTL(1 * time.Millisecond))
-	defer cache.Close()
 
 	cache.Set("key1", "value1")
 	cache.Set("key2", "value2")
@@ -175,7 +170,6 @@ func TestDeleteExpired(t *testing.T) {
 
 func TestKeys(t *testing.T) {
 	cache := New()
-	defer cache.Close()
 
 	cache.Set("key1", "value1")
 	cache.Set("key2", "value2")
@@ -185,7 +179,6 @@ func TestKeys(t *testing.T) {
 
 func TestLen(t *testing.T) {
 	cache := New()
-	defer cache.Close()
 
 	cache.Set("key1", "value1")
 	cache.Set("key2", "value2")
@@ -196,7 +189,6 @@ func TestLen(t *testing.T) {
 
 func TestMetrics(t *testing.T) {
 	cache := New(WithMetrics())
-	defer cache.Close()
 
 	cache.Set("key1", "value1")
 	cache.Set("key2", "value2")
