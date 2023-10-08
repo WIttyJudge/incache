@@ -31,14 +31,19 @@ import (
 )
 
 func main() {
+	// Initialize cache instance with default config.
 	cache := incache.New()
 
+	// Set a new value.
 	cache.Set("key1", "value1")
+	// Set a new value with 1 minute expiration time.
 	cache.SetWithTTL("key2", "value2", 1*time.Minute)
 
+	// Get the value for the key 'key1'
 	value := cache.Get("key1")
 	fmt.Println(value)
 
+	// Delete the value for the key 'key2'
 	cache.Delete("key2")
 }
 ```

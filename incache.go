@@ -10,7 +10,7 @@ import (
 type Cache struct {
 	mu               sync.RWMutex
 	items            map[string]Item
-	expirationsQueue map[string]time.Time
+	expirationsQueue expirationsQueue
 
 	config  Config
 	metrics metrics
@@ -135,10 +135,10 @@ func (c *Cache) GetDelete(key string) interface{} {
 // If the key doesn't exist, nothing will happen.
 func (c *Cache) Delete(key string) {
 	c.mu.Lock()
-	value := c.items[key].Value
+	_, ok := c.items[key]
 	c.mu.Unlock()
 
-	if value != nil {
+	if ok {
 		c.evict(key)
 	}
 }
