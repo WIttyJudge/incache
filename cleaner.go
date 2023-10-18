@@ -2,7 +2,7 @@ package incache
 
 import "time"
 
-type ExpiredDeleter interface {
+type expiredDeleter interface {
 	DeleteExpired()
 }
 
@@ -23,7 +23,7 @@ func newCleaner(cleanupInterval time.Duration) *cleaner {
 	}
 }
 
-func (c *cleaner) start(ed ExpiredDeleter) {
+func (c *cleaner) start(ed expiredDeleter) {
 	go func() {
 		ticker := time.NewTicker(c.cleanupInterval)
 		defer ticker.Stop()

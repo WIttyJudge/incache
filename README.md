@@ -102,7 +102,7 @@ ok      github.com/wittyjudge/incache   2.331s
 
 ## Development Roadmap
 
-- [x] Add collection of metrics;
+- [x] Cache metrics (at least hits, insertions, misses, evictions rate);
 - [ ] Tests and benchmarks;
 - [ ] Examples of usage in documentation;
 - [ ] Subscribe to events like eviction and insertion;

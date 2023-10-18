@@ -20,15 +20,15 @@ func defaultConfig() Config {
 	}
 }
 
-// Sets default TTL for all items that would be stored in the cache.
-// TTL <= 0 means that the item won't have expiration time at all.
+// WithTTL sets the default TTL for all items that would be stored in
+// the cache. TTL <= 0 means that the item won't have expiration time at all.
 func WithTTL(ttl time.Duration) configFunc {
 	return func(conf *Config) {
 		conf.ttl = ttl
 	}
 }
 
-// Interval between removing expired items.
+// WithCleanupInterval sets the interval between removing expired items.
 // If the interval is less than or equal to 0, no automatic clearing
 // is performed.
 func WithCleanupInterval(interval time.Duration) configFunc {
@@ -37,7 +37,8 @@ func WithCleanupInterval(interval time.Duration) configFunc {
 	}
 }
 
-// Enables the collection of metrics that run throughout the cache work.
+// WithMetrics enables the collection of metrics that run throughout
+// the cache work.
 func WithMetrics() configFunc {
 	return func(conf *Config) {
 		conf.enableMetrics = true

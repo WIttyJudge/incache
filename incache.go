@@ -7,6 +7,14 @@ import (
 
 // Cache is a synchronised map of items that are automatically removed
 // when they expire.
+//
+// Example:
+//
+// cache := incache.New(
+// 	incache.WithTTL(5*time.Minute),
+// 	incache.WithCleanupInterval(5*time.Minute),
+// 	incache.WithMetrics(),
+// )
 type Cache struct {
 	mu               sync.RWMutex
 	items            map[string]Item
@@ -17,7 +25,7 @@ type Cache struct {
 	metrics metrics
 }
 
-// Creates new instance of the cache.
+// New creates new instance of the cache.
 func New(conf ...configFunc) *Cache {
 	config := defaultConfig()
 	for _, fn := range conf {
@@ -41,7 +49,7 @@ func New(conf ...configFunc) *Cache {
 	return cache
 }
 
-// Stops the automatic cleanup process.
+// Close stops the automatic cleanup process.
 //
 // It's not necessary to run this function if you have cleanupInterval <= 0,
 // since cleaner wasn't run.
@@ -51,7 +59,7 @@ func (c *Cache) Close() {
 	}
 }
 
-// Set the key to hold a value.
+// Set sets the key to hold a value.
 // If key already holds a value, It will be overwritten.
 func (c *Cache) Set(key string, value interface{}) {
 	ttl := c.config.ttl
@@ -59,13 +67,13 @@ func (c *Cache) Set(key string, value interface{}) {
 	c.set(key, value, ttl)
 }
 
-// Similar to Set method, but with an opportunity to adjust a ttl for that
-// particular key manually.
+// SetWithTTL works similar to Set method, but with an opportunity to
+// adjust a ttl for that particular key manually.
 func (c *Cache) SetWithTTL(key string, value interface{}, ttl time.Duration) {
 	c.set(key, value, ttl)
 }
 
-// Set the key to hold a value, and then returns it.
+// SetGet sets the key to hold a value, and then returns it.
 func (c *Cache) SetGet(key string, value interface{}) interface{} {
 	ttl := c.config.ttl
 
@@ -75,8 +83,8 @@ func (c *Cache) SetGet(key string, value interface{}) interface{} {
 	return v
 }
 
-// Similar to SetGet method, but with an opportunity to adjust  ttl for that
-// particular key manually.
+// SetGetWithTTL works similar to SetGet method, but with an opportunity
+// to adjust  ttl for that particular key manually.
 func (c *Cache) SetGetWithTTL(key string, value interface{}, ttl time.Duration) interface{} {
 	c.set(key, value, ttl)
 	v := c.get(key)
@@ -84,13 +92,13 @@ func (c *Cache) SetGetWithTTL(key string, value interface{}, ttl time.Duration) 
 	return v
 }
 
-// Get the value of key.
+// Get returns the value of key.
 // If the key doesn't exist, nil value will be returned.
 func (c *Cache) Get(key string) interface{} {
 	return c.get(key)
 }
 
-// Get the values of all specified keys.
+// GetMultiple returns the values of all specified keys.
 // For every specified key that doesn't exist, nil value will be returned.
 func (c *Cache) GetMultiple(keys []string) []interface{} {
 	values := make([]interface{}, len(keys))
@@ -102,7 +110,7 @@ func (c *Cache) GetMultiple(keys []string) []interface{} {
 	return values
 }
 
-// Get the old value stored by key and set the new one for that key.
+// GetSet returns the old value stored by key and set the new one for that key.
 // If the key doesn't exist, nil value will be returned.
 func (c *Cache) GetSet(key string, value interface{}) interface{} {
 	ttl := c.config.ttl
@@ -113,8 +121,8 @@ func (c *Cache) GetSet(key string, value interface{}) interface{} {
 	return v
 }
 
-// Similar to GetSet method, but with an opportunity to adjust a ttl for that
-// particular key manually.
+// GetSetWithTTL works similar to GetSet method, but with an opportunity to
+// adjust a ttl for that particular key manually.
 func (c *Cache) GetSetWithTTL(key string, value interface{}, ttl time.Duration) interface{} {
 	v := c.get(key)
 	c.set(key, value, ttl)
@@ -122,7 +130,7 @@ func (c *Cache) GetSetWithTTL(key string, value interface{}, ttl time.Duration) 
 	return v
 }
 
-// Get the value of key and delete it.
+// GetDelete returns the value of key and delete it.
 // If the key doesn't exist, nil value will be returned.
 func (c *Cache) GetDelete(key string) interface{} {
 	value := c.get(key)
@@ -133,7 +141,7 @@ func (c *Cache) GetDelete(key string) interface{} {
 	return value
 }
 
-// Delete the value of key.
+// Delete deletes the value of key.
 // If the key doesn't exist, nothing will happen.
 func (c *Cache) Delete(key string) {
 	c.mu.Lock()
@@ -145,7 +153,7 @@ func (c *Cache) Delete(key string) {
 	}
 }
 
-// Delete all values stored in the cache.
+// DeleteAll deletes all values stored in the cache.
 func (c *Cache) DeleteAll() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -176,7 +184,7 @@ func (c *Cache) DeleteExpired() {
 	}
 }
 
-// Get slice of all existing keys in the cache.
+// Keys returns slice of all existing keys in the cache.
 func (c *Cache) Keys() []string {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -192,7 +200,7 @@ func (c *Cache) Keys() []string {
 	return keys
 }
 
-// Returns the number of stored elements in the cache.
+// Len returns the number of stored elements in the cache.
 func (c *Cache) Len() int {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
@@ -201,7 +209,7 @@ func (c *Cache) Len() int {
 	return count
 }
 
-// Check if the key exists in the cache.
+// Has checks if the key exists in the cache.
 func (c *Cache) Has(key string) bool {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
@@ -210,7 +218,7 @@ func (c *Cache) Has(key string) bool {
 	return ok
 }
 
-// Get collected cache metrics.
+// Metrics returns collected cache metrics.
 func (c *Cache) Metrics() metrics {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
@@ -218,7 +226,7 @@ func (c *Cache) Metrics() metrics {
 	return c.metrics
 }
 
-// Resets cache metrics.
+// ResetMetrics resets cache metrics.
 func (c *Cache) ResetMetrics() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
