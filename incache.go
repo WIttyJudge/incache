@@ -32,6 +32,10 @@ func New(conf ...configFunc) *Cache {
 		fn(&config)
 	}
 
+	if !config.enableDebug {
+		config.debugf = func(format string, v ...any) {}
+	}
+
 	cache := &Cache{
 		mu:               sync.RWMutex{},
 		items:            make(map[string]Item),
@@ -55,6 +59,7 @@ func New(conf ...configFunc) *Cache {
 // since cleaner wasn't run.
 func (c *Cache) Close() {
 	if c.cleaner != nil {
+		c.config.debugf("[close] stopping cleaner")
 		c.cleaner.stop()
 	}
 }
@@ -245,6 +250,8 @@ func (c *Cache) set(key string, value interface{}, ttl time.Duration) {
 		c.expirationsQueue[key] = item.ExpiresAt
 	}
 
+	c.config.debugf("[set] key: '%s', item: %+v", key, item)
+
 	c.metricsIncrInsertions()
 }
 
@@ -256,16 +263,22 @@ func (c *Cache) get(key string) interface{} {
 	value := item.Value
 
 	if value == nil {
+		c.config.debugf("[get] no value was found for the key: '%s'", key)
+
 		c.metricsIncrMisses()
 		return nil
 	}
 
 	if item.Expired() {
+		c.config.debugf("[get] received value for the key: '%s' is expired", key)
+
 		c.metricsIncrMisses()
 		return nil
 	}
 
 	c.metricsIncrHits()
+
+	c.config.debugf("[get] key: '%s', value: %+v", key, value)
 
 	return value
 }
@@ -276,6 +289,8 @@ func (c *Cache) evict(key string) {
 
 	delete(c.items, key)
 	delete(c.expirationsQueue, key)
+
+	c.config.debugf("[evict] key: '%s'", key)
 	c.metricsIncrEvictions()
 }
 

@@ -10,9 +10,15 @@ import (
 
 func TestNewDefault(t *testing.T) {
 	cache := New()
+	defaultConfig := defaultConfig()
 
 	require.NotNil(t, cache)
-	assert.Equal(t, defaultConfig(), cache.config)
+	assert.Equal(t, defaultConfig.ttl, cache.config.ttl)
+	assert.Equal(t, defaultConfig.cleanupInterval, cache.config.cleanupInterval)
+	assert.Equal(t, defaultConfig.enableMetrics, cache.config.enableMetrics)
+	assert.Equal(t, defaultConfig.enableDebug, cache.config.enableDebug)
+	assert.NotNil(t, cache.config.debugf)
+
 	assert.NotNil(t, cache.items)
 	assert.NotNil(t, cache.expirationsQueue)
 	assert.NotNil(t, cache.metrics)
@@ -24,16 +30,22 @@ func TestNewCustomConfig(t *testing.T) {
 		ttl:             1 * time.Minute,
 		cleanupInterval: 1 * time.Minute,
 		enableMetrics:   true,
+		enableDebug:     true,
 	}
 
 	cache := New(
 		WithTTL(customConfig.ttl),
 		WithCleanupInterval(customConfig.cleanupInterval),
 		WithMetrics(),
+		WithDebug(),
 	)
 
 	require.NotNil(t, cache)
-	assert.Equal(t, customConfig, cache.config)
+	assert.Equal(t, customConfig.ttl, cache.config.ttl)
+	assert.Equal(t, customConfig.cleanupInterval, cache.config.cleanupInterval)
+	assert.Equal(t, customConfig.enableMetrics, cache.config.enableMetrics)
+	assert.Equal(t, customConfig.enableDebug, cache.config.enableDebug)
+	assert.NotNil(t, cache.config.debugf)
 }
 
 func TestNewCustomConfigWithoutCleanup(t *testing.T) {

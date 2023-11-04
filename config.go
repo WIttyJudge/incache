@@ -1,12 +1,19 @@
 package incache
 
-import "time"
+import (
+	"log"
+	"os"
+	"time"
+)
 
 // Config for cache.
 type Config struct {
 	ttl             time.Duration
 	cleanupInterval time.Duration
 	enableMetrics   bool
+	enableDebug     bool
+	// It only works when debug if enabled
+	debugf func(format string, v ...any)
 }
 
 type configFunc func(*Config)
@@ -17,6 +24,8 @@ func defaultConfig() Config {
 		ttl:             5 * time.Minute,
 		cleanupInterval: 5 * time.Minute,
 		enableMetrics:   false,
+		enableDebug:     false,
+		debugf:          log.New(os.Stdout, "[incache]", 0).Printf,
 	}
 }
 
@@ -42,5 +51,21 @@ func WithCleanupInterval(interval time.Duration) configFunc {
 func WithMetrics() configFunc {
 	return func(conf *Config) {
 		conf.enableMetrics = true
+	}
+}
+
+// WithMetrics enables debug mode.
+// Debug mode allows the caching system to log debug information.
+func WithDebug() configFunc {
+	return func(config *Config) {
+		config.enableDebug = true
+	}
+}
+
+// WithDebugf sets a custom debug log function in the configuration.
+// This function is responsible for logging debug messages.
+func WithDebugf(fn func(format string, v ...any)) configFunc {
+	return func(config *Config) {
+		config.debugf = fn
 	}
 }
