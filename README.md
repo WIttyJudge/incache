@@ -6,7 +6,7 @@
 
 Simple thread-safe time-based caching library for Go.
 
-The library includes:
+## Features:
 
 - Automatic removal of expired data, which can be disabled easily;
 - Collection of metrics;
