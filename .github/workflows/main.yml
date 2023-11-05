@@ -2,26 +2,21 @@ name: main
 
 on:
   push:
-    paths-ignore:
-      - 'examples/**'
   pull_request:
-    paths-ignore:
-      - 'examples/**'
 
 jobs:
-  test:
-    name: Test
+  tests:
+    name: Tests
     runs-on: ubuntu-latest
     steps:
       - name: Setup Go
         uses: actions/setup-go@v3
         with:
           go-version: 1.18
-      - run: go mod tidy
       - name: Checkout code
         uses: actions/checkout@v3
       - name: Run tests
-        run: go test ./... -race -shuffle=on -coverprofile=coverage.out -covermode=atomic
+        run: make coverage
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
         env:
