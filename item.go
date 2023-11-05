@@ -15,10 +15,7 @@ func newItem(value interface{}, ttl time.Duration) Item {
 		TTL:   ttl,
 	}
 
-	if ttl > 0 {
-		expiresAt := time.Now().Add(ttl)
-		item.ExpiresAt = expiresAt
-	}
+	item.setExpiration()
 
 	return item
 }
@@ -35,4 +32,12 @@ func (i Item) Expired() bool {
 // CanExpire checks whether the item can expire.
 func (i Item) CanExpire() bool {
 	return !i.ExpiresAt.IsZero()
+}
+
+func (i *Item) setExpiration() {
+	if i.TTL <= 0 {
+		return
+	}
+
+	i.ExpiresAt = time.Now().Add(i.TTL)
 }
