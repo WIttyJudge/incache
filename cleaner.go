@@ -39,6 +39,6 @@ func (c *cleaner) start(ed expiredDeleter) {
 	}()
 }
 
-func (c *cleaner) stop() {
+func (c *cleaner) close() {
 	c.closeCh <- struct{}{}
 }

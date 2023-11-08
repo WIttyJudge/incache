@@ -59,8 +59,8 @@ func New(conf ...configFunc) *Cache {
 // since cleaner wasn't run.
 func (c *Cache) Close() {
 	if c.cleaner != nil {
-		c.config.debugf("[close] stopping cleaner")
-		c.cleaner.stop()
+		c.config.debugf("[close] closing cleaner")
+		c.cleaner.close()
 	}
 }
 
