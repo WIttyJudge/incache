@@ -1,5 +1,6 @@
 # incache
 
+[![GoDoc](https://godoc.org/github.com/wittyjudge/incache?status.png)](https://godoc.org/github.com/wittyjudge/incache)
 [![Go Report Card](https://goreportcard.com/badge/github.com/wittyjudge/incache)](https://goreportcard.com/report/github.com/wittyjudge/incache)
 [![codecov](https://codecov.io/gh/WIttyJudge/incache/graph/badge.svg)](https://codecov.io/gh/WIttyJudge/incache)
 [![MIT License](https://img.shields.io/github/license/mashape/apistatus.svg?maxAge=2592000)](https://github.com/WIttyJudge/incache/blob/main/LICENSE)
