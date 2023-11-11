@@ -108,8 +108,8 @@ ok      github.com/wittyjudge/incache   2.331s
 
 - [x] Cache metrics (at least hits, insertions, misses, evictions rate);
 - [x] Tests and benchmarks;
-- [x] Examples of usage in documentation;
 - [ ] Subscribe to events like eviction and insertion;
+- [ ] Change code that evicts expired items to use priority queue;
 
 ## License
 
