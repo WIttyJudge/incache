@@ -199,6 +199,15 @@ func TestLen(t *testing.T) {
 	assert.Equal(t, 2, cache.Len())
 }
 
+func TestHas(t *testing.T) {
+	cache := New()
+
+	cache.Set("key1", "value1")
+
+	assert.True(t, cache.Has("key1"))
+	assert.False(t, cache.Has("nokey"))
+}
+
 func TestMetrics(t *testing.T) {
 	cache := New(WithMetrics())
 
