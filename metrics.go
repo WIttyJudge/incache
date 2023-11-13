@@ -17,8 +17,8 @@ type metrics struct {
 	evictions uint64
 }
 
-func newMetrics() metrics {
-	return metrics{}
+func newMetrics() *metrics {
+	return &metrics{}
 }
 
 // Get collected insertions.

@@ -224,3 +224,16 @@ func TestMetrics(t *testing.T) {
 	assert.EqualValues(t, 1, metrics.Misses())
 	assert.EqualValues(t, 1, metrics.Evictions())
 }
+
+func TestResetMetrics(t *testing.T) {
+	cache := New(WithMetrics())
+	metrics := cache.Metrics()
+
+	cache.Set("key1", "value1")
+
+	assert.EqualValues(t, 1, metrics.Insertions())
+
+	cache.ResetMetrics()
+
+	assert.EqualValues(t, 0, metrics.Insertions())
+}

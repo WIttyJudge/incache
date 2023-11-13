@@ -22,7 +22,7 @@ type Cache struct {
 	cleaner          *cleaner
 
 	config  Config
-	metrics metrics
+	metrics *metrics
 }
 
 // New creates new instance of the cache.
@@ -224,7 +224,7 @@ func (c *Cache) Has(key string) bool {
 }
 
 // Metrics returns collected cache metrics.
-func (c *Cache) Metrics() metrics {
+func (c *Cache) Metrics() *metrics {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
@@ -236,7 +236,7 @@ func (c *Cache) ResetMetrics() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	c.metrics = metrics{}
+	*c.metrics = *newMetrics()
 }
 
 func (c *Cache) set(key string, value interface{}, ttl time.Duration) {
