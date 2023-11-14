@@ -54,7 +54,7 @@ func WithMetrics() configFunc {
 	}
 }
 
-// WithMetrics enables debug mode.
+// WithDebug enables debug mode.
 // Debug mode allows the caching system to log debug information.
 func WithDebug() configFunc {
 	return func(config *Config) {
