@@ -12,6 +12,7 @@ Simple thread-safe time-based caching library for Go.
 - Automatic removal of expired data, which can be disabled easily;
 - Collection of metrics;
 - Debug mode;
+- Event handlers (insertion and eviction)
 
 ## Installation
 
@@ -77,7 +78,7 @@ func main() {
 	//
 	// incache.WithMetrics() enables the collection of metrics that run throughout the cache work.
 	//
-	// incache.WithMetrics enables debug mode.
+	// incache.WithDebug() enables debug mode.
 	cache := incache.New(
 		incache.WithTTL(5*time.Minute),
 		incache.WithCleanupInterval(5*time.Minute),

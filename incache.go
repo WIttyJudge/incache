@@ -20,6 +20,7 @@ type Cache struct {
 	items            map[string]Item
 	expirationsQueue expirationsQueue
 	cleaner          *cleaner
+	eventHandlers    *eventHandlers
 
 	config  Config
 	metrics *metrics
@@ -40,6 +41,7 @@ func New(conf ...configFunc) *Cache {
 		mu:               sync.RWMutex{},
 		items:            make(map[string]Item),
 		expirationsQueue: make(map[string]time.Time),
+		eventHandlers:    newEventHandlers(),
 
 		config:  config,
 		metrics: newMetrics(),
@@ -53,15 +55,19 @@ func New(conf ...configFunc) *Cache {
 	return cache
 }
 
-// Close stops the automatic cleanup process.
+// Close allows you to stop automatic cleaner manually and wait for the the
+// exeuction of all events.
 //
-// It's not necessary to run this function if you have cleanupInterval <= 0,
-// since cleaner wasn't run.
+// There is no needs to run this function, if you don't use event and there is a
+// cleanupInterval <= 0, since cleaner whouldn't be run in this case.
 func (c *Cache) Close() {
 	if c.cleaner != nil {
 		c.config.debugf("[close] closing cleaner")
 		c.cleaner.close()
 	}
+
+	c.config.debugf("[close] waiting for the execution of all events")
+	c.eventHandlers.Wait()
 }
 
 // Set sets the key to hold a value.
@@ -239,9 +245,19 @@ func (c *Cache) ResetMetrics() {
 	*c.metrics = *newMetrics()
 }
 
+func (c *Cache) OnInsertion(fn func(key string, value interface{})) {
+	c.eventHandlers.OnInsertion(fn)
+}
+
+func (c *Cache) OnEviction(fn func(key string, value interface{})) {
+	c.eventHandlers.OnEviction(fn)
+}
+
 func (c *Cache) set(key string, value interface{}, ttl time.Duration) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+
+	c.eventHandlers.onInsertion(key, value)
 
 	item := newItem(value, ttl)
 	c.items[key] = item
@@ -286,6 +302,9 @@ func (c *Cache) get(key string) interface{} {
 func (c *Cache) evict(key string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+
+	value := c.items[key]
+	c.eventHandlers.onEviction(key, value)
 
 	delete(c.items, key)
 	delete(c.expirationsQueue, key)

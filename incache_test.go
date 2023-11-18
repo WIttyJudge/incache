@@ -237,3 +237,34 @@ func TestResetMetrics(t *testing.T) {
 
 	assert.EqualValues(t, 0, metrics.Insertions())
 }
+
+func TestOnInsertion(t *testing.T) {
+	cache := New()
+	checkCh := make(chan struct{}, 2)
+
+	cache.OnInsertion(func(_ string, _ interface{}) {
+		checkCh <- struct{}{}
+	})
+
+	cache.Set("key1", "value1")
+
+	assert.Eventually(t, func() bool {
+		return len(checkCh) == 1
+	}, time.Millisecond*500, time.Millisecond*250)
+}
+
+func TestOnEviction(t *testing.T) {
+	cache := New()
+	checkCh := make(chan struct{}, 1)
+
+	cache.OnEviction(func(_ string, _ interface{}) {
+		checkCh <- struct{}{}
+	})
+
+	cache.Set("key1", "value1")
+	cache.Delete("key1")
+
+	assert.Eventually(t, func() bool {
+		return len(checkCh) == 1
+	}, time.Millisecond*500, time.Millisecond*250)
+}
