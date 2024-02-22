@@ -55,6 +55,7 @@ func main() {
 ### Configuration Options
 
 Note that by default, a new cache instance runs with default config.
+
 However, passing config options into the `incache.New()` allows you to set desired
 behavior.
 
@@ -82,7 +83,7 @@ Example:
 cache := incache.New(incache.WithCleanupInterval(30 * time.Minute))
 ```
 
-#### WithMetrics
+#### Metrics
 
 Enables metrics collection.
 Allows for the continuous collection of metrics during the cache's operation.
@@ -94,7 +95,7 @@ Example:
 cache := incache.New(incache.WithMetrics())
 ```
 
-#### WithDebug 
+#### Debug
 
 Enables debug mode.
 Allowing the logging of debug information to the stdout.
@@ -106,7 +107,7 @@ Example:
 cache := incache.New(incache.WithDebug())
 ```
 
-#### WithDebugf
+#### Debugf
 
 Defines a custom debug log function.
 This function is responsible for logging debug messages.
