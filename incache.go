@@ -11,9 +11,11 @@ import (
 // Example:
 //
 // cache := incache.New(
-// 	incache.WithTTL(5*time.Minute),
-// 	incache.WithCleanupInterval(5*time.Minute),
-// 	incache.WithMetrics(),
+//
+//	incache.WithTTL(5*time.Minute),
+//	incache.WithCleanupInterval(5*time.Minute),
+//	incache.WithMetrics(),
+//
 // )
 type Cache struct {
 	mu               sync.RWMutex
