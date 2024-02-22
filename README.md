@@ -52,42 +52,71 @@ func main() {
 }
 ```
 
-### Custom Initialization
+### Configuration Options
 
 Note that by default, a new cache instance runs with default config.
-You can find its default options [here](https://github.com/WIttyJudge/incache/blob/main/config.go#L16).
 However, passing config options into the `incache.New()` allows you to set desired
 behavior.
 
+#### TTL
+
+Defines the default TTL for all items that would be stored in
+the cache. TTL <= 0 means that the item won't have expiration time at all.
+The default value is 5 minutes.
+
+Example:
+
 ```go
-package main
+cache := incache.New(incache.WithTTL(30 * time.Minute))
+```
 
-import (
-	"time"
+#### CleanupInterval
 
-	"github.com/wittyjudge/incache"
-)
+Defines the interval between removing expired items.
+If the interval is less than or equal to 0, no automatic clearing is performed.
+The default value is 5 minutes.
 
-func main() {
-	// incache.WithTTL() sets TTL for all items that would be stored in the cache.
-	// TTL <= 0 means that the item won't have expiration time at all.
-	//
-	// incache.WithCleanupInterval() sets Interval between removing expired items.
-	// If the interval is less than or equal to 0, no automatic clearing
-	// is performed.
-	//
-	// incache.WithMetrics() enables the collection of metrics that run throughout the cache work.
-	//
-	// incache.WithDebug() enables debug mode.
-	cache := incache.New(
-		incache.WithTTL(5*time.Minute),
-		incache.WithCleanupInterval(5*time.Minute),
-		incache.WithMetrics(),
-		incache.WithDebug(),
-	)
+Example:
 
-	cache.Set("key1", "value1")
-}
+```go
+cache := incache.New(incache.WithCleanupInterval(30 * time.Minute))
+```
+
+#### WithMetrics
+
+Enables metrics collection.
+Allows for the continuous collection of metrics during the cache's operation.
+The default value is false.
+
+Example:
+
+```go
+cache := incache.New(incache.WithMetrics())
+```
+
+#### WithDebug 
+
+Enables debug mode.
+Allowing the logging of debug information to the stdout.
+The default value is false.
+
+Example:
+
+```go
+cache := incache.New(incache.WithDebug())
+```
+
+#### WithDebugf
+
+Defines a custom debug log function.
+This function is responsible for logging debug messages.
+The default value uses the internal Go log package with the '[incache]' prefix set at the beginning.
+
+Example:
+
+```go
+myLogFunc := log.New(os.Stdout, "[myprefix]", 0).Printf
+cache := incache.New(incache.WithDebugf(myLogFunc))
 ```
 
 ## Benchmarks
