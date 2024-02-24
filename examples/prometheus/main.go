@@ -1,7 +1,10 @@
 package main
 
 import (
+	"fmt"
+	"log"
 	"net/http"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -9,21 +12,23 @@ import (
 )
 
 func main() {
-	cache := incache.New(incache.WithMetrics())
-	performCacheOperations(cache)
+	cache := incache.New(incache.WithMetrics(), incache.WithDebug())
+	go performCacheOperations(cache)
 
 	registerAndExposeMetrics(cache)
 	startMetricsServer()
 }
 
 func performCacheOperations(cache *incache.Cache) {
-	cache.Set("key1", "value1")
-	cache.Set("key2", "value2")
-	cache.Set("key3", "value3")
 
-	cache.Get("key1")
-	cache.Get("key4")
-	cache.Delete("key2")
+	for i := 0; i < 100; i++ {
+		time.Sleep(100 * time.Millisecond)
+		value := fmt.Sprintf("key%v", i)
+
+		cache.Set(value, "value")
+		cache.Get(value)
+	}
+
 }
 
 func registerAndExposeMetrics(cache *incache.Cache) {
@@ -81,6 +86,7 @@ func startMetricsServer() {
 	// Expose the registered metrics via HTTP
 	http.Handle("/metrics", promhttp.Handler())
 
-	// Start the server
-	http.ListenAndServe(":8080", nil)
+	if err := http.ListenAndServe(":8080", nil); err != nil {
+		log.Fatal(err)
+	}
 }

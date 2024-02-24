@@ -120,6 +120,20 @@ myLogFunc := log.New(os.Stdout, "[myprefix]", 0).Printf
 cache := incache.New(incache.WithDebugf(myLogFunc))
 ```
 
+### Metrics & monitoring
+
+When you create an incache instance with metrics enabled, the instance will exposes
+useful metrics that can be queried through the following methods:
+
+- `incache.Metrics().Insertions`: Total number of items inserted into cache.
+- `incache.Metrics().Hits`:  Total number of times item was successfully retrieved.
+- `incache.Metrics().Misses`:  Total number of times item wasn't retrieved
+- `incache.Metrics().Evictions`: Total number of times item was released from the cache.
+
+## Examples
+
+- [Exporting metrics to Prometheus](./examples/prometheus/prometheus.go)
+
 ## Benchmarks
 
 ```
