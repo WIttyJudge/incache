@@ -25,7 +25,7 @@ type Cache struct {
 	eventHandlers    *eventHandlers
 
 	config  Config
-	metrics *metrics
+	metrics metrics
 }
 
 // New creates new instance of the cache.
@@ -46,7 +46,11 @@ func New(conf ...configFunc) *Cache {
 		eventHandlers:    newEventHandlers(),
 
 		config:  config,
-		metrics: newMetrics(),
+		metrics: newNoMetrics(),
+	}
+
+	if config.enableMetrics {
+		cache.metrics = newRealMetrics()
 	}
 
 	if config.cleanupInterval > 0 {
@@ -232,7 +236,7 @@ func (c *Cache) Has(key string) bool {
 }
 
 // Metrics returns collected cache metrics.
-func (c *Cache) Metrics() *metrics {
+func (c *Cache) Metrics() metrics {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
@@ -244,7 +248,7 @@ func (c *Cache) ResetMetrics() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	*c.metrics = *newMetrics()
+	c.metrics.reset()
 }
 
 func (c *Cache) OnInsertion(fn func(key string, value interface{})) {
@@ -270,7 +274,7 @@ func (c *Cache) set(key string, value interface{}, ttl time.Duration) {
 
 	c.config.debugf("[set] key: '%s', item: %+v", key, item)
 
-	c.metricsIncrInsertions()
+	c.metrics.incrementInsertions()
 }
 
 func (c *Cache) get(key string) interface{} {
@@ -283,18 +287,18 @@ func (c *Cache) get(key string) interface{} {
 	if value == nil {
 		c.config.debugf("[get] no value was found for the key: '%s'", key)
 
-		c.metricsIncrMisses()
+		c.metrics.incrementMisses()
 		return nil
 	}
 
 	if item.Expired() {
 		c.config.debugf("[get] received value for the key: '%s' is expired", key)
 
-		c.metricsIncrMisses()
+		c.metrics.incrementMisses()
 		return nil
 	}
 
-	c.metricsIncrHits()
+	c.metrics.incrementHits()
 
 	c.config.debugf("[get] key: '%s', value: %+v", key, value)
 
@@ -312,29 +316,5 @@ func (c *Cache) evict(key string) {
 	delete(c.expirationsQueue, key)
 
 	c.config.debugf("[evict] key: '%s'", key)
-	c.metricsIncrEvictions()
-}
-
-func (c *Cache) metricsIncrInsertions() {
-	if c.config.enableMetrics {
-		c.metrics.incrInsertions()
-	}
-}
-
-func (c *Cache) metricsIncrHits() {
-	if c.config.enableMetrics {
-		c.metrics.incrHits()
-	}
-}
-
-func (c *Cache) metricsIncrMisses() {
-	if c.config.enableMetrics {
-		c.metrics.incrMisses()
-	}
-}
-
-func (c *Cache) metricsIncrEvictions() {
-	if c.config.enableMetrics {
-		c.metrics.incrEvictions()
-	}
+	c.metrics.incrementEvictions()
 }

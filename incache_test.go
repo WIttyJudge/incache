@@ -225,6 +225,20 @@ func TestMetrics(t *testing.T) {
 	assert.EqualValues(t, 1, metrics.Evictions())
 }
 
+func TestNoMetricsType(t *testing.T) {
+	cache := New()
+	metrics := cache.Metrics()
+
+	assert.IsType(t, &noMetrics{}, metrics)
+}
+
+func TestRealMetricsType(t *testing.T) {
+	cache := New(WithMetrics())
+	metrics := cache.Metrics()
+
+	assert.IsType(t, &realMetrics{}, metrics)
+}
+
 func TestResetMetrics(t *testing.T) {
 	cache := New(WithMetrics())
 	metrics := cache.Metrics()

@@ -2,8 +2,22 @@ package incache
 
 import "sync/atomic"
 
+type metrics interface {
+	Insertions() uint64
+	Hits() uint64
+	Misses() uint64
+	Evictions() uint64
+
+	reset()
+
+	incrementInsertions()
+	incrementHits()
+	incrementMisses()
+	incrementEvictions()
+}
+
 // Metrics stores cache statistics
-type metrics struct {
+type realMetrics struct {
 	// Shows how many times items were inserted into cache.
 	insertions uint64
 
@@ -17,42 +31,66 @@ type metrics struct {
 	evictions uint64
 }
 
-func newMetrics() *metrics {
-	return &metrics{}
+func newRealMetrics() *realMetrics {
+	return &realMetrics{}
 }
 
 // Get collected insertions.
-func (m *metrics) Insertions() uint64 {
+func (m *realMetrics) Insertions() uint64 {
 	return atomic.LoadUint64(&m.insertions)
 }
 
 // Get collected hits.
-func (m *metrics) Hits() uint64 {
+func (m *realMetrics) Hits() uint64 {
 	return atomic.LoadUint64(&m.hits)
 }
 
 // Get collected misses.
-func (m *metrics) Misses() uint64 {
+func (m *realMetrics) Misses() uint64 {
 	return atomic.LoadUint64(&m.misses)
 }
 
 // Get collected evictions.
-func (m *metrics) Evictions() uint64 {
+func (m *realMetrics) Evictions() uint64 {
 	return atomic.LoadUint64(&m.evictions)
 }
 
-func (m *metrics) incrInsertions() {
-	atomic.AddUint64(&m.insertions, 1)
+func (m *realMetrics) reset() {
+	m.insertions = 0
+	m.hits = 0
+	m.misses = 0
+	m.evictions = 0
 }
 
-func (m *metrics) incrHits() {
-	atomic.AddUint64(&m.hits, 1)
+func (m *realMetrics) incrementInsertions() {
+	m.insertions += 1
 }
 
-func (m *metrics) incrMisses() {
-	atomic.AddUint64(&m.misses, 1)
+func (m *realMetrics) incrementHits() {
+	m.hits += 1
 }
 
-func (m *metrics) incrEvictions() {
-	atomic.AddUint64(&m.evictions, 1)
+func (m *realMetrics) incrementMisses() {
+	m.misses += 1
 }
+
+func (m *realMetrics) incrementEvictions() {
+	m.evictions += 1
+}
+
+// Dummy metrics implementation that is used if metrics is disabled.
+type noMetrics struct{}
+
+func newNoMetrics() *noMetrics { return &noMetrics{} }
+
+func (m *noMetrics) Insertions() uint64 { return 0 }
+func (m *noMetrics) Hits() uint64       { return 0 }
+func (m *noMetrics) Misses() uint64     { return 0 }
+func (m *noMetrics) Evictions() uint64  { return 0 }
+
+func (m *noMetrics) reset() {}
+
+func (m *noMetrics) incrementInsertions() {}
+func (m *noMetrics) incrementHits()       {}
+func (m *noMetrics) incrementMisses()     {}
+func (m *noMetrics) incrementEvictions()  {}
