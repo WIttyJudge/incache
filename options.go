@@ -6,8 +6,8 @@ import (
 	"time"
 )
 
-// Config for cache.
-type Config struct {
+// Options for cache.
+type Options struct {
 	ttl             time.Duration
 	cleanupInterval time.Duration
 	enableMetrics   bool
@@ -16,11 +16,11 @@ type Config struct {
 	debugf func(format string, v ...any)
 }
 
-type configFunc func(*Config)
+type optionsFunc func(*Options)
 
-// DefaultConfig initializes config with default values.
-func defaultConfig() Config {
-	return Config{
+// DefaultOptions initializes options with default values.
+func defaultOptions() Options {
+	return Options{
 		ttl:             5 * time.Minute,
 		cleanupInterval: 5 * time.Minute,
 		enableMetrics:   false,
@@ -31,41 +31,41 @@ func defaultConfig() Config {
 
 // WithTTL sets the default TTL for all items that would be stored in
 // the cache. TTL <= 0 means that the item won't have expiration time at all.
-func WithTTL(ttl time.Duration) configFunc {
-	return func(conf *Config) {
-		conf.ttl = ttl
+func WithTTL(ttl time.Duration) optionsFunc {
+	return func(o *Options) {
+		o.ttl = ttl
 	}
 }
 
 // WithCleanupInterval sets the interval between removing expired items.
 // If the interval is less than or equal to 0, no automatic clearing
 // is performed.
-func WithCleanupInterval(interval time.Duration) configFunc {
-	return func(conf *Config) {
-		conf.cleanupInterval = interval
+func WithCleanupInterval(interval time.Duration) optionsFunc {
+	return func(o *Options) {
+		o.cleanupInterval = interval
 	}
 }
 
 // WithMetrics enables the collection of metrics that run throughout
 // the cache work.
-func WithMetrics() configFunc {
-	return func(conf *Config) {
-		conf.enableMetrics = true
+func WithMetrics() optionsFunc {
+	return func(o *Options) {
+		o.enableMetrics = true
 	}
 }
 
 // WithDebug enables debug mode.
 // Debug mode allows the caching system to log debug information.
-func WithDebug() configFunc {
-	return func(config *Config) {
-		config.enableDebug = true
+func WithDebug() optionsFunc {
+	return func(o *Options) {
+		o.enableDebug = true
 	}
 }
 
-// WithDebugf sets a custom debug log function in the configuration.
+// WithDebugf sets a custom debug log function in the optionsuration.
 // This function is responsible for logging debug messages.
-func WithDebugf(fn func(format string, v ...any)) configFunc {
-	return func(config *Config) {
-		config.debugf = fn
+func WithDebugf(fn func(format string, v ...any)) optionsFunc {
+	return func(o *Options) {
+		o.debugf = fn
 	}
 }

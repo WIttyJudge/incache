@@ -24,19 +24,19 @@ type Cache struct {
 	cleaner          *cleaner
 	eventHandlers    *eventHandlers
 
-	config  Config
+	options Options
 	metrics metrics
 }
 
 // New creates new instance of the cache.
-func New(conf ...configFunc) *Cache {
-	config := defaultConfig()
-	for _, fn := range conf {
-		fn(&config)
+func New(opts ...optionsFunc) *Cache {
+	options := defaultOptions()
+	for _, fn := range opts {
+		fn(&options)
 	}
 
-	if !config.enableDebug {
-		config.debugf = func(format string, v ...any) {}
+	if !options.enableDebug {
+		options.debugf = func(format string, v ...any) {}
 	}
 
 	cache := &Cache{
@@ -45,16 +45,16 @@ func New(conf ...configFunc) *Cache {
 		expirationsQueue: make(map[string]time.Time),
 		eventHandlers:    newEventHandlers(),
 
-		config:  config,
+		options: options,
 		metrics: newNoMetrics(),
 	}
 
-	if config.enableMetrics {
+	if options.enableMetrics {
 		cache.metrics = newRealMetrics()
 	}
 
-	if config.cleanupInterval > 0 {
-		cache.cleaner = newCleaner(config.cleanupInterval)
+	if options.cleanupInterval > 0 {
+		cache.cleaner = newCleaner(options.cleanupInterval)
 		cache.cleaner.start(cache)
 	}
 
@@ -68,18 +68,18 @@ func New(conf ...configFunc) *Cache {
 // cleanupInterval <= 0, since cleaner whouldn't be run in this case.
 func (c *Cache) Close() {
 	if c.cleaner != nil {
-		c.config.debugf("[close] closing cleaner")
+		c.options.debugf("[close] closing cleaner")
 		c.cleaner.close()
 	}
 
-	c.config.debugf("[close] waiting for the execution of all events")
+	c.options.debugf("[close] waiting for the execution of all events")
 	c.eventHandlers.Wait()
 }
 
 // Set sets the key to hold a value.
 // If key already holds a value, It will be overwritten.
 func (c *Cache) Set(key string, value interface{}) {
-	ttl := c.config.ttl
+	ttl := c.options.ttl
 
 	c.set(key, value, ttl)
 }
@@ -92,7 +92,7 @@ func (c *Cache) SetWithTTL(key string, value interface{}, ttl time.Duration) {
 
 // SetGet sets the key to hold a value, and then returns it.
 func (c *Cache) SetGet(key string, value interface{}) interface{} {
-	ttl := c.config.ttl
+	ttl := c.options.ttl
 
 	c.set(key, value, ttl)
 	v := c.get(key)
@@ -130,7 +130,7 @@ func (c *Cache) GetMultiple(keys []string) []interface{} {
 // GetSet returns the old value stored by key and set the new one for that key.
 // If the key doesn't exist, nil value will be returned.
 func (c *Cache) GetSet(key string, value interface{}) interface{} {
-	ttl := c.config.ttl
+	ttl := c.options.ttl
 
 	v := c.get(key)
 	c.set(key, value, ttl)
@@ -272,7 +272,7 @@ func (c *Cache) set(key string, value interface{}, ttl time.Duration) {
 		c.expirationsQueue[key] = item.ExpiresAt
 	}
 
-	c.config.debugf("[set] key: '%s', item: %+v", key, item)
+	c.options.debugf("[set] key: '%s', item: %+v", key, item)
 
 	c.metrics.incrementInsertions()
 }
@@ -285,14 +285,14 @@ func (c *Cache) get(key string) interface{} {
 	value := item.Value
 
 	if value == nil {
-		c.config.debugf("[get] no value was found for the key: '%s'", key)
+		c.options.debugf("[get] no value was found for the key: '%s'", key)
 
 		c.metrics.incrementMisses()
 		return nil
 	}
 
 	if item.Expired() {
-		c.config.debugf("[get] received value for the key: '%s' is expired", key)
+		c.options.debugf("[get] received value for the key: '%s' is expired", key)
 
 		c.metrics.incrementMisses()
 		return nil
@@ -300,7 +300,7 @@ func (c *Cache) get(key string) interface{} {
 
 	c.metrics.incrementHits()
 
-	c.config.debugf("[get] key: '%s', value: %+v", key, value)
+	c.options.debugf("[get] key: '%s', value: %+v", key, value)
 
 	return value
 }
@@ -315,6 +315,6 @@ func (c *Cache) evict(key string) {
 	delete(c.items, key)
 	delete(c.expirationsQueue, key)
 
-	c.config.debugf("[evict] key: '%s'", key)
+	c.options.debugf("[evict] key: '%s'", key)
 	c.metrics.incrementEvictions()
 }

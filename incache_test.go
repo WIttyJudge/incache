@@ -10,14 +10,14 @@ import (
 
 func TestNewDefault(t *testing.T) {
 	cache := New()
-	defaultConfig := defaultConfig()
+	defaultConfig := defaultOptions()
 
 	require.NotNil(t, cache)
-	assert.Equal(t, defaultConfig.ttl, cache.config.ttl)
-	assert.Equal(t, defaultConfig.cleanupInterval, cache.config.cleanupInterval)
-	assert.Equal(t, defaultConfig.enableMetrics, cache.config.enableMetrics)
-	assert.Equal(t, defaultConfig.enableDebug, cache.config.enableDebug)
-	assert.NotNil(t, cache.config.debugf)
+	assert.Equal(t, defaultConfig.ttl, cache.options.ttl)
+	assert.Equal(t, defaultConfig.cleanupInterval, cache.options.cleanupInterval)
+	assert.Equal(t, defaultConfig.enableMetrics, cache.options.enableMetrics)
+	assert.Equal(t, defaultConfig.enableDebug, cache.options.enableDebug)
+	assert.NotNil(t, cache.options.debugf)
 
 	assert.NotNil(t, cache.items)
 	assert.NotNil(t, cache.expirationsQueue)
@@ -26,7 +26,7 @@ func TestNewDefault(t *testing.T) {
 }
 
 func TestNewCustomConfig(t *testing.T) {
-	customConfig := Config{
+	customConfig := Options{
 		ttl:             1 * time.Minute,
 		cleanupInterval: 1 * time.Minute,
 		enableMetrics:   true,
@@ -41,11 +41,11 @@ func TestNewCustomConfig(t *testing.T) {
 	)
 
 	require.NotNil(t, cache)
-	assert.Equal(t, customConfig.ttl, cache.config.ttl)
-	assert.Equal(t, customConfig.cleanupInterval, cache.config.cleanupInterval)
-	assert.Equal(t, customConfig.enableMetrics, cache.config.enableMetrics)
-	assert.Equal(t, customConfig.enableDebug, cache.config.enableDebug)
-	assert.NotNil(t, cache.config.debugf)
+	assert.Equal(t, customConfig.ttl, cache.options.ttl)
+	assert.Equal(t, customConfig.cleanupInterval, cache.options.cleanupInterval)
+	assert.Equal(t, customConfig.enableMetrics, cache.options.enableMetrics)
+	assert.Equal(t, customConfig.enableDebug, cache.options.enableDebug)
+	assert.NotNil(t, cache.options.debugf)
 }
 
 func TestNewCustomConfigWithoutCleanup(t *testing.T) {
@@ -54,7 +54,7 @@ func TestNewCustomConfigWithoutCleanup(t *testing.T) {
 	require.NotNil(t, cache)
 
 	assert.Nil(t, cache.cleaner)
-	assert.EqualValues(t, 0, cache.config.cleanupInterval)
+	assert.EqualValues(t, 0, cache.options.cleanupInterval)
 }
 
 func TestSet(t *testing.T) {
